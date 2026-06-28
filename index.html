@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard – Não Conformidades Críticas | Frango Assado IMC</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --brand-orange: #E8620A;
+    --brand-green: #4A7C3F;
+    --brand-light: #F9F5F0;
+    --red: #C0392B;
+    --red-light: #FADBD8;
+    --yellow: #E67E22;
+    --green: #27AE60;
+    --gray-100: #F5F5F5;
+    --gray-200: #E0E0E0;
+    --gray-600: #666;
+    --gray-800: #333;
+    --shadow: 0 2px 8px rgba(0,0,0,0.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    color: #fff;
+    padding: 22px 40px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.3);
+  }
+  .logo-block { display: flex; flex-direction: column; }
+  .logo-block h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-block p { font-size: 0.82rem; color: #aaa; margin-top: 2px; }
+  .logo-icon {
+    width: 100px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+  .logo-icon svg { width: 100%; height: auto; }
+  .badge {
+    margin-left: auto;
+    background: rgba(232,98,10,0.2);
+    border: 1px solid var(--brand-orange);
+    color: var(--brand-orange);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* LAYOUT */
+  main { padding: 28px 36px; max-width: 1400px; margin: 0 auto; }
+
+  .section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gray-600);
+    margin: 28px 0 14px;
+  }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 6px;
+  }
+  .kpi-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--gray-200);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card.orange { border-top-color: var(--brand-orange); }
+  .kpi-card.red    { border-top-color: var(--red); }
+  .kpi-card.green  { border-top-color: var(--green); }
+  .kpi-card.yellow { border-top-color: var(--yellow); }
+  .kpi-card.blue   { border-top-color: #2980B9; }
+  .kpi-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray-600); }
+  .kpi-value { font-size: 2.2rem; font-weight: 800; line-height: 1.1; margin: 6px 0 2px; color: var(--gray-800); }
+  .kpi-sub { font-size: 0.72rem; color: var(--gray-600); }
+  .kpi-delta {
+    position: absolute; top: 14px; right: 16px;
+    font-size: 0.72rem; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+  }
+  .delta-up   { background: var(--red-light); color: var(--red); }
+  .delta-down { background: #D5F5E3; color: var(--green); }
+  .delta-neu  { background: #EBF5FB; color: #2980B9; }
+
+  /* CHART CARDS */
+  .chart-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .chart-card h3 { font-size: 0.88rem; font-weight: 700; color: var(--gray-800); margin-bottom: 4px; }
+  .chart-card p  { font-size: 0.72rem; color: var(--gray-600); margin-bottom: 18px; }
+  .chart-container { position: relative; }
+
+  .row-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .row-full { margin-bottom: 18px; }
+
+  /* HEATMAP */
+  .heatmap-wrapper { overflow-x: auto; }
+  table.heatmap {
+    width: 100%; border-collapse: collapse; font-size: 0.72rem;
+    table-layout: fixed;
+  }
+  table.heatmap th, table.heatmap td {
+    padding: 6px 4px; text-align: center; border: 1px solid #eee;
+  }
+  table.heatmap th { background: #f7f7f7; font-weight: 600; color: var(--gray-600); font-size: 0.67rem; }
+  table.heatmap td.store-name {
+    text-align: left; padding-left: 10px; font-size: 0.67rem;
+    font-weight: 500; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 160px;
+  }
+  .cell-0  { background: #fff; color: #ccc; }
+  .cell-1  { background: #FADBD8; color: #C0392B; font-weight: 700; }
+  .cell-2  { background: #E74C3C; color: #fff; font-weight: 700; }
+  .cell-total { font-weight: 700; background: #f0f0f0; }
+  .cell-year  { font-weight: 700; background: #EBF5FB; color: #2471A3; }
+
+  /* RANKING TABLE */
+  .rank-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .rank-table th { background: #f7f7f7; padding: 8px 10px; text-align: left; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--gray-600); border-bottom: 2px solid #eee; }
+  .rank-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-num { font-weight: 800; color: var(--gray-600); width: 28px; }
+  .rank-num.top3 { color: var(--red); }
+  .rank-bar-wrap { background: #f5f5f5; border-radius: 4px; height: 8px; flex: 1; min-width: 80px; }
+  .rank-bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--red), var(--brand-orange)); }
+  .rank-val { font-weight: 700; color: var(--gray-800); min-width: 28px; text-align: right; }
+  .rank-flex { display: flex; align-items: center; gap: 8px; }
+  .tag-year { display: inline-block; font-size: 0.62rem; font-weight: 600; padding: 1px 6px; border-radius: 3px; background: #EBF5FB; color: #2471A3; margin: 1px; }
+  .tag-year.r { background: var(--red-light); color: var(--red); }
+
+  /* YEAR FILTER */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--gray-200);
+    background: #fff; font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    color: var(--gray-600); transition: all 0.15s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--brand-orange); color: #fff; border-color: var(--brand-orange);
+  }
+
+  .insight-box {
+    background: linear-gradient(135deg, #fff8f5, #fff);
+    border: 1px solid #f5d5c5;
+    border-left: 4px solid var(--brand-orange);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--gray-800);
+    margin-bottom: 18px;
+  }
+  .insight-box strong { color: var(--brand-orange); }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    border-top: 1px solid var(--gray-200);
+    margin-top: 12px;
+  }
+
+  @media (max-width: 900px) {
+    main { padding: 14px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .row-2, .row-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">
+    <!-- Frango Assado logo SVG -->
+    <svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Frango Assado">
+      <!-- Background pill -->
+      <rect x="0" y="0" width="200" height="80" rx="10" ry="10" fill="#fff"/>
+
+      <!-- Chicken mascot head -->
+      <!-- Body circle outline -->
+      <circle cx="38" cy="40" r="28" fill="#fff" stroke="#C41F1F" stroke-width="2.5"/>
+
+      <!-- Comb (crista) -->
+      <ellipse cx="30" cy="13" rx="5" ry="7" fill="#C41F1F"/>
+      <ellipse cx="38" cy="11" rx="5" ry="7" fill="#C41F1F"/>
+      <ellipse cx="46" cy="13" rx="5" ry="7" fill="#C41F1F"/>
+
+      <!-- Feathers/neck -->
+      <ellipse cx="38" cy="50" rx="18" ry="12" fill="#F5C518"/>
+
+      <!-- Head -->
+      <ellipse cx="38" cy="30" rx="16" ry="15" fill="#F5C518"/>
+
+      <!-- Eye white -->
+      <circle cx="42" cy="26" r="6" fill="#fff"/>
+      <!-- Eye pupil -->
+      <circle cx="44" cy="27" r="3.5" fill="#1a1a1a"/>
+      <!-- Eye shine -->
+      <circle cx="43" cy="25.5" r="1.2" fill="#fff"/>
+
+      <!-- Beak -->
+      <path d="M48 33 Q56 32 54 38 Q50 39 48 36 Z" fill="#E8A020"/>
+
+      <!-- Wattle (papo) -->
+      <ellipse cx="50" cy="39" rx="4" ry="5" fill="#C41F1F"/>
+
+      <!-- Smile line -->
+      <path d="M44 35 Q47 37 50 35" fill="none" stroke="#C41F1F" stroke-width="1.2" stroke-linecap="round"/>
+
+      <!-- FRANGO ASSADO text -->
+      <text x="76" y="33" font-family="Arial Black, Arial, sans-serif" font-size="15" font-weight="900" fill="#C41F1F" letter-spacing="0.5">FRANGO</text>
+      <text x="76" y="52" font-family="Arial Black, Arial, sans-serif" font-size="15" font-weight="900" fill="#C41F1F" letter-spacing="0.5">ASSADO</text>
+      <text x="76" y="64" font-family="Arial, sans-serif" font-size="7.5" fill="#888" letter-spacing="1">™  I M C</text>
+    </svg>
+  </div>
+  <div class="logo-block">
+    <h1>Frango Assado IMC — Não Conformidades Críticas</h1>
+    <p>Produto Vencido · Histórico 2022–2026 · Tailler Alimento, Higiene e Saúde</p>
+  </div>
+  <span class="badge">Atualizado Jun/2026</span>
+</header>
+
+<main>
+
+  <!-- KPI ROW -->
+  <p class="section-title">Visão Geral do Programa</p>
+  <div class="kpi-grid">
+    <div class="kpi-card orange">
+      <div class="kpi-label">Total Acumulado</div>
+      <div class="kpi-value">247</div>
+      <div class="kpi-sub">Ocorrências 2022–2026</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Pior Ano</div>
+      <div class="kpi-value">68</div>
+      <div class="kpi-sub">2023 · +48% vs. início</div>
+      <span class="kpi-delta delta-up">▲ pico</span>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Melhor Resultado</div>
+      <div class="kpi-value">45</div>
+      <div class="kpi-sub">2024 · –34% vs. 2023</div>
+      <span class="kpi-delta delta-down">▼ mín</span>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Loja Crítica</div>
+      <div class="kpi-value">23</div>
+      <div class="kpi-sub">Cambuí · all-time total</div>
+      <span class="kpi-delta delta-up">▲ #1</span>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">2026 (Jan–Jun)</div>
+      <div class="kpi-value">24</div>
+      <div class="kpi-sub">Projeção anual: ~48</div>
+      <span class="kpi-delta delta-neu">↗ parcial</span>
+    </div>
+  </div>
+
+  <!-- INSIGHT -->
+  <div class="insight-box" style="margin-top:18px;">
+    📌 <strong>Resumo executivo:</strong> O programa de mapeamento iniciou em <strong>junho/2022</strong>. O ano de <strong>2023</strong> registrou o maior volume de ocorrências (68), seguido de uma queda significativa em <strong>2024</strong> (45). Em 2025 houve reincidência parcial (64). As lojas <strong>Cambuí, Fernão 29 e Dom Pedro 66</strong> concentram os maiores índices históricos de produto vencido e merecem atenção prioritária.
+  </div>
+
+  <!-- EVOLUÇÃO ANUAL + MENSAL -->
+  <p class="section-title">Evolução Histórica · Produto Vencido</p>
+  <div class="row-2">
+    <div class="chart-card">
+      <h3>Ocorrências Mensais por Ano</h3>
+      <p>Comparativo mês a mês — 2022 inicia em junho</p>
+      <div class="chart-container" style="height:280px">
+        <canvas id="chartMonthly"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Total Anual de Ocorrências</h3>
+      <p>2026 projetado com base em Jan–Jun</p>
+      <div class="chart-container" style="height:280px">
+        <canvas id="chartAnual"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RANKING LOJAS -->
+  <p class="section-title">Ranking de Lojas · Maiores Índices de Produto Vencido</p>
+  <div class="row-2">
+    <div class="chart-card">
+      <h3>Top 15 Lojas — Acumulado 2022–2026</h3>
+      <p>Total de ocorrências de produto vencido no período</p>
+      <div class="chart-container" style="height:380px">
+        <canvas id="chartRanking"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Detalhamento por Loja</h3>
+      <p>Ocorrências anuais das 10 piores lojas</p>
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Loja</th>
+            <th>Total</th>
+            <th>Ocorrências/ano</th>
+            <th>Barra</th>
+          </tr>
+        </thead>
+        <tbody id="rankTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HEATMAP -->
+  <p class="section-title">Mapa de Calor · Ocorrências por Loja / Ano</p>
+  <div class="chart-card row-full">
+    <h3>Distribuição de Produto Vencido — Todas as Lojas</h3>
+    <p>Intensidade de cor indica frequência de ocorrências no ano</p>
+    <div class="heatmap-wrapper">
+      <table class="heatmap" id="heatmapTable"></table>
+    </div>
+  </div>
+
+  <!-- MENSAL DETALHADO -->
+  <p class="section-title">Sazonalidade · Ocorrências por Mês</p>
+  <div class="row-2">
+    <div class="chart-card">
+      <h3>Média Mensal de Ocorrências (2022–2026)</h3>
+      <p>Identifica meses críticos do calendário</p>
+      <div class="chart-container" style="height:240px">
+        <canvas id="chartSazon"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Evolução Trimestral por Ano</h3>
+      <p>Agrupamento Q1–Q4</p>
+      <div class="chart-container" style="height:240px">
+        <canvas id="chartTrimestral"></canvas>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Fonte: Mapeamento de Não Conformidades Críticas – Produto Vencido (2022–2026) · Tailler Alimento, Higiene e Saúde · www.tailler.com.br
+</footer>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+const monthlyData = {
+  2022: [0, 0, 0, 0, 0, 9, 6, 7, 6, 9, 5, 4],
+  2023: [4, 5, 11, 6, 3, 9, 5, 5, 7, 3, 7, 3],
+  2024: [7, 4, 2, 0, 4, 4, 7, 3, 4, 3, 4, 3],
+  2025: [4, 4, 5, 5, 9, 7, 4, 4, 3, 6, 8, 5],
+  2026: [3, 4, 3, 5, 4, 5, 0, 0, 0, 0, 0, 0]
+};
+
+const annualTotals = {
+  2022: 46, 2023: 68, 2024: 45, 2025: 64, 2026: 24
+};
+
+// Per-store data: {storeName: {2022, 2023, 2024, 2025, 2026}}
+const storeData = [
+  { name: 'Cambuí',           y2022:5, y2023:6, y2024:3, y2025:5, y2026:4 },
+  { name: 'Fernão 29',        y2022:5, y2023:5, y2024:5, y2025:5, y2026:2 },
+  { name: 'Dom Pedro 66',     y2022:2, y2023:4, y2024:4, y2025:5, y2026:3 },
+  { name: 'Jaguariúna',       y2022:1, y2023:6, y2024:4, y2025:3, y2026:1 },
+  { name: 'Caieiras',         y2022:2, y2023:2, y2024:3, y2025:5, y2026:2 },
+  { name: 'Cajamar',          y2022:4, y2023:2, y2024:1, y2025:3, y2026:4 },
+  { name: 'Guará',            y2022:2, y2023:4, y2024:3, y2025:4, y2026:1 },
+  { name: 'Cesário Lange',    y2022:0, y2023:3, y2024:3, y2025:6, y2026:1 },
+  { name: 'Castelo Branco 73',y2022:3, y2023:1, y2024:0, y2025:5, y2026:2 },
+  { name: 'Espelho 66',       y2022:0, y2023:3, y2024:4, y2025:3, y2026:0 },
+  { name: 'Itupeva',          y2022:4, y2023:4, y2024:1, y2025:0, y2026:0 },
+  { name: 'Mogi Guaçu',       y2022:2, y2023:4, y2024:2, y2025:1, y2026:0 },
+  { name: 'Diadema',          y2022:1, y2023:2, y2024:2, y2025:4, y2026:0 },
+  { name: 'Aparecida',        y2022:4, y2023:0, y2024:0, y2025:0, y2026:0 },
+  { name: 'Jacareí',          y2022:2, y2023:3, y2024:1, y2025:2, y2026:0 },
+  { name: 'Planet',           y2022:0, y2023:3, y2024:1, y2025:4, y2026:0 },
+  { name: 'Louveira',         y2022:0, y2023:3, y2024:1, y2025:1, y2026:1 },
+  { name: 'Taubaté',          y2022:1, y2023:3, y2024:1, y2025:2, y2026:0 },
+  { name: 'Atibaia KM 44',    y2022:0, y2023:2, y2024:1, y2025:3, y2026:0 },
+  { name: 'Roseira',          y2022:1, y2023:2, y2024:1, y2025:0, y2026:1 },
+  { name: 'Cravinhos',        y2022:1, y2023:1, y2024:1, y2025:1, y2026:0 },
+  { name: 'Carvalho Pinto',   y2022:2, y2023:1, y2024:1, y2025:1, y2026:0 },
+  { name: 'Agroroad',         y2022:2, y2023:2, y2024:1, y2025:0, y2026:0 },
+  { name: 'Trevo Campinas',   y2022:0, y2023:1, y2024:0, y2025:0, y2026:0 },
+  { name: 'Cubatão',          y2022:0, y2023:1, y2024:1, y2025:0, y2026:0 },
+  { name: 'Sumaré',           y2022:2, y2023:0, y2024:0, y2025:0, y2026:0 },
+  { name: 'Guararema',        y2022:0, y2023:0, y2024:0, y2025:1, y2026:0 },
+  { name: 'Imigrantes SBC',   y2022:0, y2023:0, y2024:0, y2025:0, y2026:2 },
+];
+
+// Compute totals
+storeData.forEach(s => {
+  s.total = s.y2022 + s.y2023 + s.y2024 + s.y2025 + s.y2026;
+});
+storeData.sort((a, b) => b.total - a.total);
+
+// ─── CHART DEFAULTS ──────────────────────────────────────────────────────────
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+Chart.defaults.font.size = 11;
+
+const COLORS = {
+  2022: '#5DADE2',
+  2023: '#E74C3C',
+  2024: '#27AE60',
+  2025: '#E67E22',
+  2026: '#8E44AD'
+};
+
+// ─── CHART 1: MONTHLY ────────────────────────────────────────────────────────
+new Chart(document.getElementById('chartMonthly'), {
+  type: 'line',
+  data: {
+    labels: MONTHS,
+    datasets: [2022, 2023, 2024, 2025, 2026].map(yr => ({
+      label: String(yr),
+      data: monthlyData[yr],
+      borderColor: COLORS[yr],
+      backgroundColor: COLORS[yr] + '18',
+      borderWidth: yr === 2026 ? 2 : 2,
+      borderDash: yr === 2026 ? [5,3] : [],
+      tension: 0.35,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      fill: false,
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { boxWidth: 12, padding: 14, font: { size: 11 } } },
+      tooltip: {
+        callbacks: {
+          footer: items => {
+            const sum = items.reduce((a, b) => a + b.raw, 0);
+            return 'Total: ' + sum;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, ticks: { stepSize: 2 }, grid: { color: '#f0f0f0' } }
+    }
+  }
+});
+
+// ─── CHART 2: ANNUAL TOTAL ───────────────────────────────────────────────────
+new Chart(document.getElementById('chartAnual'), {
+  type: 'bar',
+  data: {
+    labels: ['2022\n(7 meses)', '2023', '2024', '2025', '2026\n(6 meses)'],
+    datasets: [{
+      label: 'Ocorrências',
+      data: [46, 68, 45, 64, 24],
+      backgroundColor: [COLORS[2022], COLORS[2023], COLORS[2024], COLORS[2025], COLORS[2026]],
+      borderRadius: 7,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          afterLabel: ctx => {
+            const notes = ['Início do programa','Pico histórico','Melhor ano','Reincidência','Parcial (Jan–Jun)'];
+            return notes[ctx.dataIndex];
+          }
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, grid: { color: '#f0f0f0' } }
+    }
+  }
+});
+
+// ─── CHART 3: RANKING HORIZONTAL ─────────────────────────────────────────────
+const top15 = storeData.slice(0, 15);
+new Chart(document.getElementById('chartRanking'), {
+  type: 'bar',
+  data: {
+    labels: top15.map(s => s.name),
+    datasets: [{
+      label: 'Total ocorrências',
+      data: top15.map(s => s.total),
+      backgroundColor: top15.map((s, i) => {
+        if (i === 0) return '#C0392B';
+        if (i === 1) return '#E74C3C';
+        if (i === 2) return '#E67E22';
+        return '#85C1E9';
+      }),
+      borderRadius: 4,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+      y: { grid: { display: false }, ticks: { font: { size: 10 } } }
+    }
+  }
+});
+
+// ─── RANK TABLE ──────────────────────────────────────────────────────────────
+const tbody = document.getElementById('rankTableBody');
+const maxTotal = storeData[0].total;
+storeData.slice(0, 10).forEach((s, i) => {
+  const years = [
+    { yr: 2022, v: s.y2022 }, { yr: 2023, v: s.y2023 },
+    { yr: 2024, v: s.y2024 }, { yr: 2025, v: s.y2025 },
+    { yr: 2026, v: s.y2026 }
+  ];
+  const tags = years.filter(y => y.v > 0).map(y => {
+    const cls = y.v >= 5 ? 'r' : '';
+    return `<span class="tag-year ${cls}">${y.yr}: ${y.v}</span>`;
+  }).join('');
+  const pct = (s.total / maxTotal * 100).toFixed(0);
+  const numCls = i < 3 ? 'rank-num top3' : 'rank-num';
+  tbody.innerHTML += `
+    <tr>
+      <td class="${numCls}">${i+1}º</td>
+      <td><strong>${s.name}</strong><br><small style="color:#999">${tags}</small></td>
+      <td class="rank-val">${s.total}</td>
+      <td colspan="2">
+        <div class="rank-flex">
+          <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%"></div></div>
+          <span style="font-size:0.68rem;color:#999">${pct}%</span>
+        </div>
+      </td>
+    </tr>`;
+});
+
+// ─── HEATMAP ─────────────────────────────────────────────────────────────────
+const table = document.getElementById('heatmapTable');
+const years = [2022, 2023, 2024, 2025, 2026];
+// Header
+let html = '<thead><tr><th style="text-align:left;width:160px">Loja</th>';
+years.forEach(y => html += `<th>${y}</th>`);
+html += '<th>Total</th></tr></thead><tbody>';
+
+storeData.forEach(s => {
+  const vals = [s.y2022, s.y2023, s.y2024, s.y2025, s.y2026];
+  html += `<tr><td class="store-name" title="${s.name}">${s.name}</td>`;
+  vals.forEach(v => {
+    const cls = v === 0 ? 'cell-0' : v === 1 ? 'cell-1' : 'cell-2';
+    html += `<td class="${cls}">${v > 0 ? v : '·'}</td>`;
+  });
+  html += `<td class="cell-total">${s.total}</td></tr>`;
+});
+
+html += '</tbody>';
+table.innerHTML = html;
+
+// ─── CHART 4: SAZONALIDADE ───────────────────────────────────────────────────
+// Average per month across all complete years (excl. 2022 partial months 1-5, excl. 2026 partial)
+const sazonAvg = MONTHS.map((_, mi) => {
+  const vals = [];
+  if (mi >= 5) vals.push(monthlyData[2022][mi]); // 2022 starts Jun
+  vals.push(monthlyData[2023][mi]);
+  vals.push(monthlyData[2024][mi]);
+  vals.push(monthlyData[2025][mi]);
+  if (mi < 6) vals.push(monthlyData[2026][mi]); // 2026 only Jan-Jun
+  const sum = vals.reduce((a, b) => a + b, 0);
+  return parseFloat((sum / vals.length).toFixed(1));
+});
+
+new Chart(document.getElementById('chartSazon'), {
+  type: 'bar',
+  data: {
+    labels: MONTHS,
+    datasets: [{
+      label: 'Média de ocorrências',
+      data: sazonAvg,
+      backgroundColor: sazonAvg.map(v => v >= 6 ? '#E74C3C' : v >= 4 ? '#E67E22' : '#5DADE2'),
+      borderRadius: 5,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, grid: { color: '#f0f0f0' } }
+    }
+  }
+});
+
+// ─── CHART 5: TRIMESTRAL ─────────────────────────────────────────────────────
+function quarterly(yr) {
+  const d = monthlyData[yr];
+  return [
+    d[0]+d[1]+d[2],
+    d[3]+d[4]+d[5],
+    d[6]+d[7]+d[8],
+    d[9]+d[10]+d[11]
+  ];
+}
+
+new Chart(document.getElementById('chartTrimestral'), {
+  type: 'line',
+  data: {
+    labels: ['Q1','Q2','Q3','Q4'],
+    datasets: [2022, 2023, 2024, 2025].map(yr => ({
+      label: String(yr),
+      data: quarterly(yr),
+      borderColor: COLORS[yr],
+      backgroundColor: COLORS[yr] + '20',
+      tension: 0.3,
+      pointRadius: 5,
+      borderWidth: 2,
+      fill: false,
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'top', labels: { boxWidth: 12, padding: 12 } } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { beginAtZero: true, grid: { color: '#f0f0f0' } }
+    }
+  }
+});
+</script>
+</body>
+</html>
