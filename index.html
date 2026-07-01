@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard – Não Conformidades Críticas | Frango Assado IMC</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Titan+One&display=swap" rel="stylesheet">
 <style>
   :root {
     --brand-orange: #E8620A;
@@ -39,15 +40,36 @@
     box-shadow: 0 3px 12px rgba(0,0,0,0.3);
   }
   .logo-block { display: flex; flex-direction: column; }
-  .logo-block h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.3px; }
-  .logo-block p { font-size: 0.82rem; color: #aaa; margin-top: 2px; }
-  .logo-icon {
-    width: 100px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
+  .logo-block h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; line-height: 1.3; }
+  .logo-block h1 .highlight {
+    color: #F9A800;
+    background: rgba(249,168,0,0.12);
+    border-radius: 4px;
+    padding: 0 6px;
   }
-  .logo-icon svg { width: 100%; height: auto; }
+  .logo-block p { font-size: 0.8rem; color: #aaa; margin-top: 4px; }
+  .logo-text-only {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex-shrink: 0;
+  }
+  .logo-brand {
+    font-family: 'Titan One', 'Arial Black', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #F9A800;
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .logo-sub {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #F9A800;
+    letter-spacing: 3px;
+    opacity: 0.75;
+    margin-top: 2px;
+  }
   .badge {
     margin-left: auto;
     background: rgba(232,98,10,0.2);
@@ -198,52 +220,13 @@
 <body>
 
 <header>
-  <div class="logo-icon">
-    <!-- Frango Assado logo SVG -->
-    <svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Frango Assado">
-      <!-- Background pill -->
-      <rect x="0" y="0" width="200" height="80" rx="10" ry="10" fill="#fff"/>
-
-      <!-- Chicken mascot head -->
-      <!-- Body circle outline -->
-      <circle cx="38" cy="40" r="28" fill="#fff" stroke="#C41F1F" stroke-width="2.5"/>
-
-      <!-- Comb (crista) -->
-      <ellipse cx="30" cy="13" rx="5" ry="7" fill="#C41F1F"/>
-      <ellipse cx="38" cy="11" rx="5" ry="7" fill="#C41F1F"/>
-      <ellipse cx="46" cy="13" rx="5" ry="7" fill="#C41F1F"/>
-
-      <!-- Feathers/neck -->
-      <ellipse cx="38" cy="50" rx="18" ry="12" fill="#F5C518"/>
-
-      <!-- Head -->
-      <ellipse cx="38" cy="30" rx="16" ry="15" fill="#F5C518"/>
-
-      <!-- Eye white -->
-      <circle cx="42" cy="26" r="6" fill="#fff"/>
-      <!-- Eye pupil -->
-      <circle cx="44" cy="27" r="3.5" fill="#1a1a1a"/>
-      <!-- Eye shine -->
-      <circle cx="43" cy="25.5" r="1.2" fill="#fff"/>
-
-      <!-- Beak -->
-      <path d="M48 33 Q56 32 54 38 Q50 39 48 36 Z" fill="#E8A020"/>
-
-      <!-- Wattle (papo) -->
-      <ellipse cx="50" cy="39" rx="4" ry="5" fill="#C41F1F"/>
-
-      <!-- Smile line -->
-      <path d="M44 35 Q47 37 50 35" fill="none" stroke="#C41F1F" stroke-width="1.2" stroke-linecap="round"/>
-
-      <!-- FRANGO ASSADO text -->
-      <text x="76" y="33" font-family="Arial Black, Arial, sans-serif" font-size="15" font-weight="900" fill="#C41F1F" letter-spacing="0.5">FRANGO</text>
-      <text x="76" y="52" font-family="Arial Black, Arial, sans-serif" font-size="15" font-weight="900" fill="#C41F1F" letter-spacing="0.5">ASSADO</text>
-      <text x="76" y="64" font-family="Arial, sans-serif" font-size="7.5" fill="#888" letter-spacing="1">™  I M C</text>
-    </svg>
+  <div class="logo-text-only">
+    <span class="logo-brand">FRANGO ASSADO</span>
+    <span class="logo-sub">IMC</span>
   </div>
   <div class="logo-block">
-    <h1>Frango Assado IMC — Não Conformidades Críticas</h1>
-    <p>Produto Vencido · Histórico 2022–2026 · Tailler Alimento, Higiene e Saúde</p>
+    <h1>Dashboard de Não Conformidades Críticas — <span class="highlight">⚠ ALIMENTO VENCIDO</span></h1>
+    <p>Mapeamento histórico 2022–2026 · IMC · Tailler Alimento, Higiene e Saúde</p>
   </div>
   <span class="badge">Atualizado Jun/2026</span>
 </header>
